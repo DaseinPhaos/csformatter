@@ -10,6 +10,9 @@ namespace csformatter {
             var sw = System.Diagnostics.Stopwatch.StartNew();
             var begin = sw.Elapsed;
             var cliArgs = EntryPoint.Cli.Parse<CliArgs>(args);
+            if(string.IsNullOrEmpty(cliArgs.DstFileName)) {
+                cliArgs.DstFileName = cliArgs.SrcFileName;
+            }
 
             var workspace = new AdhocWorkspace();
             var project = workspace.AddProject("Debug Project",LanguageNames.CSharp);
@@ -92,7 +95,15 @@ namespace csformatter {
         }
 
         class CliArgs:EntryPoint.BaseCliArguments {
-            public CliArgs() : base("??? wtf") { }
+            public CliArgs() : base("") { }
+
+            public override void OnUserFacingException(EntryPoint.Exceptions.UserFacingException e,string message) {
+
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Invalid argument: " + message);
+                Console.ResetColor();
+                Environment.Exit(1);
+            }
 
             [EntryPoint.Required]
             [EntryPoint.Operand(Position: 1)]
@@ -101,7 +112,6 @@ namespace csformatter {
                 get; set;
             }
 
-            [EntryPoint.Required]
             [EntryPoint.Operand(Position: 2)]
             [EntryPoint.Help("Dst File Name")]
             public string DstFileName {
@@ -197,7 +207,6 @@ namespace csformatter {
             public bool NewLineForMembersInAnonymousTypes {
                 get; set;
             }
-            // TODO: public static Option<BinaryOperatorSpacingOptions> SpacingAroundBinaryOperator { get; }
             [EntryPoint.Option("SpaceBeforeDot")]
             public bool SpaceBeforeDot {
                 get; set;
