@@ -68,7 +68,8 @@ namespace csformatter {
                 .WithChangedOption(CSharpFormattingOptions.SpaceBeforeColonInBaseTypeDeclaration,cliArgs.SpaceBeforeColonInBaseTypeDeclaration)
                 .WithChangedOption(CSharpFormattingOptions.SpaceBeforeComma,cliArgs.SpaceBeforeComma)
                 .WithChangedOption(CSharpFormattingOptions.SpacesIgnoreAroundVariableDeclaration,cliArgs.SpacesIgnoreAroundVariableDeclaration)
-                .WithChangedOption(CSharpFormattingOptions.NewLineForClausesInQuery,cliArgs.NewLineForClausesInQuery);
+                .WithChangedOption(CSharpFormattingOptions.NewLineForClausesInQuery,cliArgs.NewLineForClausesInQuery)
+                .WithChangedOption(CSharpFormattingOptions.SpacingAroundBinaryOperator,cliArgs.SpacingAroundBinaryOperator);
 
             var docTs = sw.Elapsed;
             var docDuration = docTs - readFileTs;
@@ -289,14 +290,11 @@ namespace csformatter {
             public bool NewLineForClausesInQuery {
                 get; set;
             }
+
+            [EntryPoint.OptionParameter("SpacingAroundBinaryOperator",'b')]
+            public BinaryOperatorSpacingOptions SpacingAroundBinaryOperator {
+                get; set;
+            }
         }
-
-        // class CliCmds : EntryPoint.BaseCliCommands
-        // {
-        //     public void Format(string[] args)
-        //     {
-
-        //     }
-        // }
     }
 }
