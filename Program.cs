@@ -1,7 +1,7 @@
 using System;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
-using Microsoft.CodeAnalysis.Options;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Formatting;
 
 namespace csformatter {
@@ -10,83 +10,85 @@ namespace csformatter {
             var sw = System.Diagnostics.Stopwatch.StartNew();
             var begin = sw.Elapsed;
             var cliArgs = EntryPoint.Cli.Parse<CliArgs>(args);
-            if(string.IsNullOrEmpty(cliArgs.DstFileName)) {
+            if (string.IsNullOrEmpty(cliArgs.DstFileName)) {
                 cliArgs.DstFileName = cliArgs.SrcFileName;
             }
-
-            var workspace = new AdhocWorkspace();
-            var project = workspace.AddProject("Debug Project",LanguageNames.CSharp);
             var cliParsedTs = sw.Elapsed;
             var cliDuration = cliParsedTs - begin;
+
             SourceText sourceText;
-            using(var fs = System.IO.File.OpenRead(cliArgs.SrcFileName)) {
+            using (var fs = System.IO.File.OpenRead(cliArgs.SrcFileName)) {
                 sourceText = SourceText.From(fs);
             }
+
+            var parseOptions = CSharpParseOptions.Default.WithPreprocessorSymbols(cliArgs.PreprocessorSymbols);
+            var root = CSharpSyntaxTree.ParseText(sourceText, parseOptions).GetRoot();
             var readFileTs = sw.Elapsed;
             var readFileDuration = readFileTs - cliParsedTs;
 
-            var doc = workspace.AddDocument(project.Id,cliArgs.SrcFileName,sourceText);
-            var formatOptionSet = doc.GetOptionsAsync().Result
-                .WithChangedOption(CSharpFormattingOptions.SpacingAfterMethodDeclarationName,cliArgs.SpacingAfterMethodDeclarationName)
-                .WithChangedOption(CSharpFormattingOptions.IndentBlock,cliArgs.IndentBlock)
-                .WithChangedOption(CSharpFormattingOptions.IndentSwitchSection,cliArgs.IndentSwitchSection)
-                .WithChangedOption(CSharpFormattingOptions.IndentSwitchCaseSection,cliArgs.IndentSwitchCaseSection)
-                .WithChangedOption(CSharpFormattingOptions.IndentSwitchCaseSectionWhenBlock,cliArgs.IndentSwitchCaseSectionWhenBlock)
-                .WithChangedOption(CSharpFormattingOptions.WrappingPreserveSingleLine,cliArgs.WrappingPreserveSingleLine)
-                .WithChangedOption(CSharpFormattingOptions.WrappingKeepStatementsOnSingleLine,cliArgs.WrappingKeepStatementsOnSingleLine)
-                .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInTypes,cliArgs.NewLinesForBracesInTypes)
-                .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInMethods,cliArgs.NewLinesForBracesInMethods)
-                .WithChangedOption(CSharpFormattingOptions.IndentBraces,cliArgs.IndentBraces)
-                .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInProperties,cliArgs.NewLinesForBracesInProperties)
-                .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInAnonymousMethods,cliArgs.NewLinesForBracesInAnonymousMethods)
-                .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInControlBlocks,cliArgs.NewLinesForBracesInControlBlocks)
-                .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInAnonymousTypes,cliArgs.NewLinesForBracesInAnonymousTypes)
-                .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInObjectCollectionArrayInitializers,cliArgs.NewLinesForBracesInObjectCollectionArrayInitializers)
-                .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInLambdaExpressionBody,cliArgs.NewLinesForBracesInLambdaExpressionBody)
-                .WithChangedOption(CSharpFormattingOptions.NewLineForElse,cliArgs.NewLineForElse)
-                .WithChangedOption(CSharpFormattingOptions.NewLineForCatch,cliArgs.NewLineForCatch)
-                .WithChangedOption(CSharpFormattingOptions.NewLineForFinally,cliArgs.NewLineForFinally)
-                .WithChangedOption(CSharpFormattingOptions.NewLineForMembersInObjectInit,cliArgs.NewLineForMembersInObjectInit)
-                .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInAccessors,cliArgs.NewLinesForBracesInAccessors)
-                .WithChangedOption(CSharpFormattingOptions.NewLineForMembersInAnonymousTypes,cliArgs.NewLineForMembersInAnonymousTypes)
-                .WithChangedOption(CSharpFormattingOptions.SpaceBeforeDot,cliArgs.SpaceBeforeDot)
-                .WithChangedOption(CSharpFormattingOptions.SpaceWithinMethodDeclarationParenthesis,cliArgs.SpaceWithinMethodDeclarationParenthesis)
-                .WithChangedOption(CSharpFormattingOptions.SpaceBetweenEmptyMethodDeclarationParentheses,cliArgs.SpaceBetweenEmptyMethodDeclarationParentheses)
-                .WithChangedOption(CSharpFormattingOptions.SpaceAfterMethodCallName,cliArgs.SpaceAfterMethodCallName)
-                .WithChangedOption(CSharpFormattingOptions.SpaceWithinMethodCallParentheses,cliArgs.SpaceWithinMethodCallParentheses)
-                .WithChangedOption(CSharpFormattingOptions.SpaceBetweenEmptyMethodCallParentheses,cliArgs.SpaceBetweenEmptyMethodCallParentheses)
-                .WithChangedOption(CSharpFormattingOptions.SpaceAfterControlFlowStatementKeyword,cliArgs.SpaceAfterControlFlowStatementKeyword)
-                .WithChangedOption(CSharpFormattingOptions.SpaceWithinExpressionParentheses,cliArgs.SpaceWithinExpressionParentheses)
-                .WithChangedOption(CSharpFormattingOptions.SpaceWithinCastParentheses,cliArgs.SpaceWithinCastParentheses)
-                .WithChangedOption(CSharpFormattingOptions.SpaceWithinOtherParentheses,cliArgs.SpaceWithinOtherParentheses)
-                .WithChangedOption(CSharpFormattingOptions.SpaceBeforeSemicolonsInForStatement,cliArgs.SpaceBeforeSemicolonsInForStatement)
-                .WithChangedOption(CSharpFormattingOptions.SpaceAfterCast,cliArgs.SpaceAfterCast)
-                .WithChangedOption(CSharpFormattingOptions.SpaceBeforeOpenSquareBracket,cliArgs.SpaceBeforeOpenSquareBracket)
-                .WithChangedOption(CSharpFormattingOptions.SpaceBetweenEmptySquareBrackets,cliArgs.SpaceBetweenEmptySquareBrackets)
-                .WithChangedOption(CSharpFormattingOptions.SpaceWithinSquareBrackets,cliArgs.SpaceWithinSquareBrackets)
-                .WithChangedOption(CSharpFormattingOptions.SpaceAfterColonInBaseTypeDeclaration,cliArgs.SpaceAfterColonInBaseTypeDeclaration)
-                .WithChangedOption(CSharpFormattingOptions.SpaceAfterComma,cliArgs.SpaceAfterComma)
-                .WithChangedOption(CSharpFormattingOptions.SpaceAfterDot,cliArgs.SpaceAfterDot)
-                .WithChangedOption(CSharpFormattingOptions.SpaceAfterSemicolonsInForStatement,cliArgs.SpaceAfterSemicolonsInForStatement)
-                .WithChangedOption(CSharpFormattingOptions.SpaceBeforeColonInBaseTypeDeclaration,cliArgs.SpaceBeforeColonInBaseTypeDeclaration)
-                .WithChangedOption(CSharpFormattingOptions.SpaceBeforeComma,cliArgs.SpaceBeforeComma)
-                .WithChangedOption(CSharpFormattingOptions.SpacesIgnoreAroundVariableDeclaration,cliArgs.SpacesIgnoreAroundVariableDeclaration)
-                .WithChangedOption(CSharpFormattingOptions.NewLineForClausesInQuery,cliArgs.NewLineForClausesInQuery)
-                .WithChangedOption(CSharpFormattingOptions.SpacingAroundBinaryOperator,cliArgs.SpacingAroundBinaryOperator);
+            var workspace = new AdhocWorkspace();
+            var formatOptionSet = workspace.Options
+                .WithChangedOption(CSharpFormattingOptions.SpacingAfterMethodDeclarationName, cliArgs.SpacingAfterMethodDeclarationName)
+                .WithChangedOption(CSharpFormattingOptions.IndentBlock, cliArgs.IndentBlock)
+                .WithChangedOption(CSharpFormattingOptions.IndentSwitchSection, cliArgs.IndentSwitchSection)
+                .WithChangedOption(CSharpFormattingOptions.IndentSwitchCaseSection, cliArgs.IndentSwitchCaseSection)
+                .WithChangedOption(CSharpFormattingOptions.IndentSwitchCaseSectionWhenBlock, cliArgs.IndentSwitchCaseSectionWhenBlock)
+                .WithChangedOption(CSharpFormattingOptions.WrappingPreserveSingleLine, cliArgs.WrappingPreserveSingleLine)
+                .WithChangedOption(CSharpFormattingOptions.WrappingKeepStatementsOnSingleLine, cliArgs.WrappingKeepStatementsOnSingleLine)
+                .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInTypes, cliArgs.NewLinesForBracesInTypes)
+                .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInMethods, cliArgs.NewLinesForBracesInMethods)
+                .WithChangedOption(CSharpFormattingOptions.IndentBraces, cliArgs.IndentBraces)
+                .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInProperties, cliArgs.NewLinesForBracesInProperties)
+                .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInAnonymousMethods, cliArgs.NewLinesForBracesInAnonymousMethods)
+                .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInControlBlocks, cliArgs.NewLinesForBracesInControlBlocks)
+                .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInAnonymousTypes, cliArgs.NewLinesForBracesInAnonymousTypes)
+                .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInObjectCollectionArrayInitializers, cliArgs.NewLinesForBracesInObjectCollectionArrayInitializers)
+                .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInLambdaExpressionBody, cliArgs.NewLinesForBracesInLambdaExpressionBody)
+                .WithChangedOption(CSharpFormattingOptions.NewLineForElse, cliArgs.NewLineForElse)
+                .WithChangedOption(CSharpFormattingOptions.NewLineForCatch, cliArgs.NewLineForCatch)
+                .WithChangedOption(CSharpFormattingOptions.NewLineForFinally, cliArgs.NewLineForFinally)
+                .WithChangedOption(CSharpFormattingOptions.NewLineForMembersInObjectInit, cliArgs.NewLineForMembersInObjectInit)
+                .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInAccessors, cliArgs.NewLinesForBracesInAccessors)
+                .WithChangedOption(CSharpFormattingOptions.NewLineForMembersInAnonymousTypes, cliArgs.NewLineForMembersInAnonymousTypes)
+                .WithChangedOption(CSharpFormattingOptions.SpaceBeforeDot, cliArgs.SpaceBeforeDot)
+                .WithChangedOption(CSharpFormattingOptions.SpaceWithinMethodDeclarationParenthesis, cliArgs.SpaceWithinMethodDeclarationParenthesis)
+                .WithChangedOption(CSharpFormattingOptions.SpaceBetweenEmptyMethodDeclarationParentheses, cliArgs.SpaceBetweenEmptyMethodDeclarationParentheses)
+                .WithChangedOption(CSharpFormattingOptions.SpaceAfterMethodCallName, cliArgs.SpaceAfterMethodCallName)
+                .WithChangedOption(CSharpFormattingOptions.SpaceWithinMethodCallParentheses, cliArgs.SpaceWithinMethodCallParentheses)
+                .WithChangedOption(CSharpFormattingOptions.SpaceBetweenEmptyMethodCallParentheses, cliArgs.SpaceBetweenEmptyMethodCallParentheses)
+                .WithChangedOption(CSharpFormattingOptions.SpaceAfterControlFlowStatementKeyword, cliArgs.SpaceAfterControlFlowStatementKeyword)
+                .WithChangedOption(CSharpFormattingOptions.SpaceWithinExpressionParentheses, cliArgs.SpaceWithinExpressionParentheses)
+                .WithChangedOption(CSharpFormattingOptions.SpaceWithinCastParentheses, cliArgs.SpaceWithinCastParentheses)
+                .WithChangedOption(CSharpFormattingOptions.SpaceWithinOtherParentheses, cliArgs.SpaceWithinOtherParentheses)
+                .WithChangedOption(CSharpFormattingOptions.SpaceBeforeSemicolonsInForStatement, cliArgs.SpaceBeforeSemicolonsInForStatement)
+                .WithChangedOption(CSharpFormattingOptions.SpaceAfterCast, cliArgs.SpaceAfterCast)
+                .WithChangedOption(CSharpFormattingOptions.SpaceBeforeOpenSquareBracket, cliArgs.SpaceBeforeOpenSquareBracket)
+                .WithChangedOption(CSharpFormattingOptions.SpaceBetweenEmptySquareBrackets, cliArgs.SpaceBetweenEmptySquareBrackets)
+                .WithChangedOption(CSharpFormattingOptions.SpaceWithinSquareBrackets, cliArgs.SpaceWithinSquareBrackets)
+                .WithChangedOption(CSharpFormattingOptions.SpaceAfterColonInBaseTypeDeclaration, cliArgs.SpaceAfterColonInBaseTypeDeclaration)
+                .WithChangedOption(CSharpFormattingOptions.SpaceAfterComma, cliArgs.SpaceAfterComma)
+                .WithChangedOption(CSharpFormattingOptions.SpaceAfterDot, cliArgs.SpaceAfterDot)
+                .WithChangedOption(CSharpFormattingOptions.SpaceAfterSemicolonsInForStatement, cliArgs.SpaceAfterSemicolonsInForStatement)
+                .WithChangedOption(CSharpFormattingOptions.SpaceBeforeColonInBaseTypeDeclaration, cliArgs.SpaceBeforeColonInBaseTypeDeclaration)
+                .WithChangedOption(CSharpFormattingOptions.SpaceBeforeComma, cliArgs.SpaceBeforeComma)
+                .WithChangedOption(CSharpFormattingOptions.SpacesIgnoreAroundVariableDeclaration, cliArgs.SpacesIgnoreAroundVariableDeclaration)
+                .WithChangedOption(CSharpFormattingOptions.NewLineForClausesInQuery, cliArgs.NewLineForClausesInQuery)
+                .WithChangedOption(CSharpFormattingOptions.SpacingAroundBinaryOperator, cliArgs.SpacingAroundBinaryOperator);
 
             var docTs = sw.Elapsed;
             var docDuration = docTs - readFileTs;
 
-            var formatted = Microsoft.CodeAnalysis.Formatting.Formatter.FormatAsync(
-                doc,
+            var formatted = Microsoft.CodeAnalysis.Formatting.Formatter.Format(
+                root,
+                workspace,
                 formatOptionSet
-            ).Result;
-            var formattedSrc = formatted.GetTextAsync().Result;
+            );
+            var formattedSrc = formatted.GetText();
             var formatTs = sw.Elapsed;
             var formatDuration = formatTs - docTs;
 
-            using(var os = System.IO.File.Create(cliArgs.DstFileName,4096,System.IO.FileOptions.WriteThrough))
-            using(var tw = new System.IO.StreamWriter(os)) {
+            using (var os = System.IO.File.Create(cliArgs.DstFileName, 4096, System.IO.FileOptions.WriteThrough))
+            using (var tw = new System.IO.StreamWriter(os)) {
                 formattedSrc.Write(tw);
             }
             var fileWriteTs = sw.Elapsed;
@@ -94,10 +96,10 @@ namespace csformatter {
             System.Console.WriteLine($"cli: {cliDuration}, read: {readFileDuration}, doc: {docDuration},format: {formatDuration}, write: {fileWriteDuration}");
         }
 
-        class CliArgs:EntryPoint.BaseCliArguments {
+        class CliArgs: EntryPoint.BaseCliArguments {
             public CliArgs() : base("") { }
 
-            public override void OnUserFacingException(EntryPoint.Exceptions.UserFacingException e,string message) {
+            public override void OnUserFacingException(EntryPoint.Exceptions.UserFacingException e, string message) {
 
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Invalid argument: " + message);
@@ -299,9 +301,12 @@ namespace csformatter {
             public bool NewLineForClausesInQuery {
                 get; set;
             }
-
-            [EntryPoint.OptionParameter("SpacingAroundBinaryOperator",'b')]
+            [EntryPoint.OptionParameter("SpacingAroundBinaryOperator", 'b')]
             public BinaryOperatorSpacingOptions SpacingAroundBinaryOperator {
+                get; set;
+            }
+            [EntryPoint.OptionParameter("PreprocessorSymbols", 'D')]
+            public System.Collections.Generic.List<string> PreprocessorSymbols {
                 get; set;
             }
         }
